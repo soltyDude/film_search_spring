@@ -1,0 +1,42 @@
+server:
+  port: 8082  # `user-service` работает на порту 8082
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: user-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  application:
+    name: user-service  # Имя сервиса в Eureka
+  datasource:
+    url: jdbc:postgresql://localhost:5432/userdb
+    username: postgres
+    password: qwerty1234
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update  # Автоматическое создание таблиц
+    show-sql: true  # Логирование SQL-запросов
+    properties:
+      hibernate:
+        format_sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/  # Адрес Eureka Server
+  instance:
+    prefer-ip-address: true
+
+jwt:
+  secret: fK7s8WcVYpAb94J5zQJr32eTl6dWqHXzMQeqGzXywKCd6T7v3YKmSgP9x3D2VJsaVxXYLkq5PKWz7vUMbS9Xrw==
+  # Секретный ключ для JWT
+  expiration: 86400000  # Время жизни токена (24 часа)
+

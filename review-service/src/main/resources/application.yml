@@ -1,0 +1,46 @@
+server:
+  port: 8083
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: review-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  application:
+    name: review-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/reviewdb
+    username: postgres
+    password: qwerty1234
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+  instance:
+    prefer-ip-address: true
+
+tmdb:
+  api_key: e28fe83118014486bd75c60ecd32ede4
+  base_url: https://api.themoviedb.org/3
+
+
+user-service:
+  name: USER-SERVICE
+film-service:
+  name: FILM-SERVICE
+gateway:
+  serviceName: GATEWAY-SERVICE
+
+
+

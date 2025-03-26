@@ -1,0 +1,60 @@
+server:
+  port: 8081  # Порт нашего Gateway
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: gateway-service-group
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  application:
+    name: gateway-service  # Имя нашего Gateway в Eureka
+
+  cloud:
+    gateway:
+      routes:
+        - id: film-service-route
+          uri: lb://FILM-SERVICE
+          predicates:
+            - Path=/film-service/**
+          filters:
+            - StripPrefix=1
+
+        - id: user-service-route
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/user-service/**
+          filters:
+            - StripPrefix=1
+
+        - id: review-service-route
+          uri: lb://REVIEW-SERVICE
+          predicates:
+            - Path=/review-service/**
+          filters:
+            - StripPrefix=1
+
+        - id: playlist-service-route
+          uri: lb://PLAYLIST-SERVICE
+          predicates:
+            - Path=/playlist-service/**
+          filters:
+            - StripPrefix=1
+
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+    register-with-eureka: true
+    fetch-registry: true
+
+logging:
+  level:
+    com.netflix.eureka: DEBUG
+    com.netflix.discovery: DEBUG
