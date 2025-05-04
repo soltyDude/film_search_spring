@@ -12,30 +12,14 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 public class SecurityConfig {
 
-    private final JwtFilter jwtFilter;
-
-    public SecurityConfig(JwtFilter jwtFilter) {
-        this.jwtFilter = jwtFilter;
-    }
-
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        // Разрешаем всё, чтобы не мешать Gateway
         http
-                .securityMatcher("/**")
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers(
-                                "/auth/**",
-                                "/users/register",
-                                "/users/exists/**" // ← теперь открыт
-                        ).permitAll()
-                        .anyRequest().authenticated()
-                )
                 .csrf(csrf -> csrf.disable())
-                .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
-
+                .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
         return http.build();
     }
-
 
     @Bean
     public PasswordEncoder passwordEncoder() {

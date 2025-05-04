@@ -31,6 +31,7 @@ public class UserController {
     // GET /users/exists/{id}
     @GetMapping("/exists/{id}")
     public ResponseEntity<Boolean> userExists(@PathVariable Long id) {
+        System.out.println("exists aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
         boolean exists = userService.userExistsById(id); // метод надо сделать в сервисе
         return ResponseEntity.ok(exists);
     }

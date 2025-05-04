@@ -16,22 +16,7 @@ public class KafkaConsumer {
     @KafkaListener(topics = "film-rating-update", groupId = "film-service-group")
     public void listen(String message) {
         try {
-            System.out.println("RAW MESSAGE = " +
-                    "aaaaaaaaaaaaaaaaaaaaaaaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
-                    "" +
-                    "" +
-                    "" +
-                    "" +
-                    "" +
-                    "" +
-                    "" +
-                    "" +
-                    "" +
-                    "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA" +
-                    "" +
-                    "" +
-                    "" +
-                    "" + message);
+
             JsonObject json = JsonParser.parseString(message).getAsJsonObject();
 
             Long filmId = json.get("filmId").getAsLong();

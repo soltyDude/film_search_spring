@@ -1,4 +1,4 @@
-package com.example.userservice.security;
+package com.example.gateway.security;
 
 import io.jsonwebtoken.*;
 import io.jsonwebtoken.security.Keys;
@@ -7,32 +7,15 @@ import org.springframework.stereotype.Component;
 
 import java.nio.charset.StandardCharsets;
 import java.security.Key;
-import java.util.Date;
 
 @Component
 public class JwtUtil {
 
     @Value("${jwt.secret}")
-    private String jwtSecret;
-
-    @Value("${jwt.expiration}")
-    private long expiration;
+    private String secret;
 
     private Key getSigningKey() {
-        return Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8));
-    }
-
-    public String generateToken(String email, String role) {
-        Date now = new Date();
-        Date exp = new Date(now.getTime() + expiration);
-
-        return Jwts.builder()
-                .setSubject(email)
-                .claim("role", role)
-                .setIssuedAt(now)
-                .setExpiration(exp)
-                .signWith(getSigningKey(), SignatureAlgorithm.HS512)
-                .compact();
+        return Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
     }
 
     public boolean validateToken(String token) {
@@ -43,7 +26,6 @@ public class JwtUtil {
                     .parseClaimsJws(token);
             return true;
         } catch (JwtException e) {
-            System.out.println("Invalid JWT: " + e.getMessage());
             return false;
         }
     }

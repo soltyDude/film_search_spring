@@ -32,8 +32,13 @@ public class AuthController {
             throw new BadCredentialsException("Invalid password");
         }
 
-        String token = jwtUtil.generateToken(user.getEmail());
+        String token = jwtUtil.generateToken(user.getEmail(), user.getRole().name());
 
-        return ResponseEntity.ok(Map.of("token", token));
+        return ResponseEntity.ok(Map.of(
+                "token", token,
+                "email", user.getEmail(),
+                "role", user.getRole().name()
+        ));
     }
+
 }

@@ -1,6 +1,7 @@
 server:
   port: 8081  # Порт нашего Gateway
 
+
 spring:
   kafka:
     bootstrap-servers: localhost:9092
@@ -15,8 +16,14 @@ spring:
   application:
     name: gateway-service  # Имя нашего Gateway в Eureka
 
+
   cloud:
     gateway:
+      httpclient:
+        wiretap: true
+      httpserver:
+        wiretap: true
+
       routes:
         - id: film-service-route
           uri: lb://FILM-SERVICE
@@ -54,7 +61,6 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
 
-logging:
-  level:
-    com.netflix.eureka: DEBUG
-    com.netflix.discovery: DEBUG
+jwt:
+  secret: fK7s8WcVYpAb94J5zQJr32eTl6dWqHXzMQeqGzXywKCd6T7v3YKmSgP9x3D2VJsaVxXYLkq5PKWz7vUMbS9Xrw==  # Должен совпадать с User Service!
+  expiration: 86400000  # 24 часа

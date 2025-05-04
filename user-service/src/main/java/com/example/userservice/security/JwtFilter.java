@@ -35,8 +35,8 @@ public class JwtFilter extends OncePerRequestFilter {
             String token = authHeader.substring(7); // удаляем "Bearer "
 
             if (jwtUtil.validateToken(token)) {
-                String username = jwtUtil.extractUsername(token);
-                UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
+                String email = jwtUtil.extractEmail(token);
+                UserDetails userDetails = customUserDetailsService.loadUserByUsername(email);
 
                 var authentication = new UsernamePasswordAuthenticationToken(
                         userDetails,
