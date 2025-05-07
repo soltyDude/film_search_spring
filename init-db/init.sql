@@ -1,0 +1,4 @@
+CREATE DATABASE userdb;
+CREATE DATABASE film_db;
+CREATE DATABASE reviewdb;
+CREATE DATABASE playlistdb;

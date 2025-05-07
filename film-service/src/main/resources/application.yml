@@ -1,9 +1,25 @@
 server:
-  port: 8080  # Порт Film-Service
+  port: 8080
 
 spring:
+  application:
+    name: film-service
+  datasource:
+    url: jdbc:postgresql://postgres:5432/film_db
+    username: postgres
+    password: qwerty1234
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update  # Создание таблиц автоматически
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: true  # Логирование SQL-запросов
+    properties:
+      hibernate:
+        format_sql: true
+
   kafka:
-    bootstrap-servers: localhost:9092
+    bootstrap-servers: kafka:9092
     consumer:
       group-id: film-service-group
       auto-offset-reset: earliest
@@ -12,32 +28,20 @@ spring:
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
-  application:
-    name: film-service  # Имя сервиса для регистрации в Eureka
-
-  datasource:
-    url: jdbc:postgresql://localhost:5432/film_db
-    username: postgres
-    password: qwerty1234
-    driver-class-name: org.postgresql.Driver
-
-  jpa:
-    hibernate:
-      ddl-auto: update
-    show-sql: true  # Показывать SQL-запросы в логах
 
   autoconfigure:
     exclude:
       - org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration
       - org.springframework.boot.actuate.autoconfigure.security.servlet.ManagementWebSecurityAutoConfiguration
-    # Отключаем дефолтную секьюрность и security для Actuator
 
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
+      defaultZone: http://eureka-server:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
+  instance:
+    prefer-ip-address: true
 
 logging:
   level:
@@ -47,5 +51,3 @@ logging:
 tmdb:
   api_key: e28fe83118014486bd75c60ecd32ede4
   base_url: https://api.themoviedb.org/3
-
-

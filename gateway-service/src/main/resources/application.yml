@@ -4,6 +4,7 @@ server:
 
 spring:
   kafka:
+
     bootstrap-servers: localhost:9092
     consumer:
       group-id: gateway-service-group
@@ -57,10 +58,16 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: http://localhost:8761/eureka
-    register-with-eureka: true
+      defaultZone: http://eureka-server:8761/eureka
+      register-with-eureka: true
     fetch-registry: true
 
 jwt:
   secret: fK7s8WcVYpAb94J5zQJr32eTl6dWqHXzMQeqGzXywKCd6T7v3YKmSgP9x3D2VJsaVxXYLkq5PKWz7vUMbS9Xrw==  # Должен совпадать с User Service!
   expiration: 86400000  # 24 часа
+
+
+mvc:
+  view:
+    prefix: /WEB-INF/jsp/  # Указываем путь к папке с JSP файлами
+    suffix: .jsp  # Расширение файлов JSP

@@ -15,7 +15,7 @@ spring:
   application:
     name: user-service  # Имя сервиса в Eureka
   datasource:
-    url: jdbc:postgresql://localhost:5432/userdb
+    url: jdbc:postgresql://postgres:5432/userdb
     username: postgres
     password: qwerty1234
     driver-class-name: org.postgresql.Driver
@@ -33,7 +33,7 @@ eureka:
     register-with-eureka: true
     fetch-registry: true
     service-url:
-      defaultZone: http://localhost:8761/eureka/  # Адрес Eureka Server
+       defaultZone: http://eureka-server:8761/eureka
   instance:
     prefer-ip-address: true
 

@@ -89,7 +89,17 @@ public class ReviewService {
     private boolean isUserExists(Long userId) {
         String url = "http://" + gatewayServiceName + "/user-service/users/exists/" + userId;
         try {
-            ResponseEntity<Boolean> response = restTemplate.getForEntity(url, Boolean.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("X-Internal-Call", "true"); // 👈 Вставляем доверенный заголовок
+
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            ResponseEntity<Boolean> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    Boolean.class
+            );
+
             return (response.getStatusCode() == HttpStatus.OK) && Boolean.TRUE.equals(response.getBody());
         } catch (Exception e) {
             return false;
@@ -99,10 +109,21 @@ public class ReviewService {
     private boolean isFilmExists(Long filmId) {
         String url = "http://" + gatewayServiceName + "/film-service/films/exists/" + filmId;
         try {
-            ResponseEntity<Boolean> response = restTemplate.getForEntity(url, Boolean.class);
+            HttpHeaders headers = new HttpHeaders();
+            headers.add("X-Internal-Call", "true"); // 👈 Вставляем доверенный заголовок
+
+            HttpEntity<Void> entity = new HttpEntity<>(headers);
+            ResponseEntity<Boolean> response = restTemplate.exchange(
+                    url,
+                    HttpMethod.GET,
+                    entity,
+                    Boolean.class
+            );
+
             return (response.getStatusCode() == HttpStatus.OK) && Boolean.TRUE.equals(response.getBody());
         } catch (Exception e) {
             return false;
         }
     }
+
 }
