@@ -6,124 +6,101 @@ import com.example.reviewservice.kafka.KafkaProducer;
 import com.example.reviewservice.repository.ReviewRepository;
 import com.example.reviewservice.repository.ViewedMovieRepository;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
-import java.util.*;
+import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
 public class ReviewService {
 
     private final ReviewRepository reviewRepository;
-    private final RestTemplate restTemplate;
     private final ViewedMovieRepository viewedMovieRepository;
     private final KafkaProducer kafkaProducer;
+    private final RestTemplate restTemplate;   // Bean уже есть (@LoadBalanced оставлять не обязательно)
 
-    @Value("${gateway.serviceName}")
-    private String gatewayServiceName;
+    /* ----------------‑‑‑ CRUD ‑‑‑---------------- */
 
     public Review createReview(Review review) {
-        if (reviewRepository.findByUserIdAndFilmId(review.getUserId(), review.getFilmId()).isPresent()) {
-            throw new IllegalArgumentException("Review already exists");
-        }
 
-        if (!isUserExists(review.getUserId()) || !isFilmExists(review.getFilmId())) {
-            throw new IllegalArgumentException("User or film not found");
-        }
+        reviewRepository.findByUserIdAndFilmId(review.getUserId(), review.getFilmId())
+                .ifPresent(r -> { throw new IllegalArgumentException("Review already exists"); });
 
-        if (!viewedMovieRepository.existsByUserIdAndFilmId(review.getUserId(), review.getFilmId())) {
+        if (!userExists(review.getUserId()))
+            throw new IllegalArgumentException("User not found");
+
+        if (!filmExists(review.getFilmId()))
+            throw new IllegalArgumentException("Film not found");
+
+        if (!viewedMovieRepository.existsByUserIdAndFilmId(review.getUserId(), review.getFilmId()))
             throw new IllegalArgumentException("The film was not viewed by the user");
-        }
 
-        Review savedReview = reviewRepository.save(review);
+        Review saved = reviewRepository.save(review);
 
-        ViewedMovie viewedMovie = viewedMovieRepository
-                .findByUserIdAndFilmId(review.getUserId(), review.getFilmId())
-                .orElseThrow(() -> new RuntimeException("Viewed movie not found"));
+        viewedMovieRepository.findByUserIdAndFilmId(review.getUserId(), review.getFilmId())
+                .ifPresent(vm -> {
+                    vm.setReviewId(saved.getId());
+                    viewedMovieRepository.save(vm);
+                });
 
-        viewedMovie.setReviewId(savedReview.getId());
-        viewedMovieRepository.save(viewedMovie);
-
-        sendRatingUpdateToKafka(savedReview.getFilmId());
-        return savedReview;
+        sendRatingUpdateToKafka(saved.getFilmId());
+        return saved;
     }
 
     public Review updateReview(Review review) {
-        Optional<Review> existing = reviewRepository.findById(review.getId());
-        if (existing.isEmpty()) {
-            throw new IllegalArgumentException("Review not found with id: " + review.getId());
-        }
+        Review existing = reviewRepository.findById(review.getId())
+                .orElseThrow(() -> new IllegalArgumentException("Review not found"));
+        existing.setRating(review.getRating());
+        existing.setReviewText(review.getReviewText());
 
-        Review updated = reviewRepository.save(review);
-
+        Review updated = reviewRepository.save(existing);
         sendRatingUpdateToKafka(updated.getFilmId());
         return updated;
     }
 
     public void deleteReview(Long id) {
-        Optional<Review> existing = reviewRepository.findById(id);
-        if (existing.isEmpty()) return;
-
-        Long filmId = existing.get().getFilmId();
-        reviewRepository.deleteById(id);
-
-        sendRatingUpdateToKafka(filmId);
+        reviewRepository.findById(id).ifPresent(r -> {
+            reviewRepository.deleteById(id);
+            sendRatingUpdateToKafka(r.getFilmId());
+        });
     }
 
     public List<Review> getReviewsByFilm(Long filmId) {
         return reviewRepository.findByFilmId(filmId);
     }
 
-    // как уебан, но не хочу делать запрос в фильм сервис, потом исправить
+    /* ----------------‑‑‑ helpers ‑‑‑---------------- */
+
     private void sendRatingUpdateToKafka(Long filmId) {
         List<Review> reviews = reviewRepository.findByFilmId(filmId);
-        double average = reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
-        int count = reviews.size();
-
-        kafkaProducer.sendRatingUpdate(filmId, average, count);
+        double avg = reviews.stream().mapToInt(Review::getRating).average().orElse(0.0);
+        kafkaProducer.sendRatingUpdate(filmId, avg, reviews.size());
     }
 
-    private boolean isUserExists(Long userId) {
-        String url = "http://" + gatewayServiceName + "/user-service/users/exists/" + userId;
+    /* ----- Здесь только прямые вызовы контейнеров ----- */
+
+    private boolean userExists(Long userId) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("X-Internal-Call", "true"); // 👈 Вставляем доверенный заголовок
-
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-            ResponseEntity<Boolean> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    entity,
-                    Boolean.class
-            );
-
-            return (response.getStatusCode() == HttpStatus.OK) && Boolean.TRUE.equals(response.getBody());
-        } catch (Exception e) {
+            //  user‑service слушает на 8082 (см. docker‑compose)
+            String url = "http://user-service:8082/users/exists/" + userId;
+            Boolean body = restTemplate.getForObject(url, Boolean.class);
+            return Boolean.TRUE.equals(body);
+        } catch (Exception ex) {
             return false;
         }
     }
 
-    private boolean isFilmExists(Long filmId) {
-        String url = "http://" + gatewayServiceName + "/film-service/films/exists/" + filmId;
+    private boolean filmExists(Long filmId) {
         try {
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("X-Internal-Call", "true"); // 👈 Вставляем доверенный заголовок
-
-            HttpEntity<Void> entity = new HttpEntity<>(headers);
-            ResponseEntity<Boolean> response = restTemplate.exchange(
-                    url,
-                    HttpMethod.GET,
-                    entity,
-                    Boolean.class
-            );
-
-            return (response.getStatusCode() == HttpStatus.OK) && Boolean.TRUE.equals(response.getBody());
-        } catch (Exception e) {
+            //  film‑service слушает на 8080
+            String url = "http://film-service:8080/films/exists/" + filmId;
+            Boolean body = restTemplate.getForObject(url, Boolean.class);
+            return Boolean.TRUE.equals(body);
+        } catch (Exception ex) {
             return false;
         }
     }
-
 }

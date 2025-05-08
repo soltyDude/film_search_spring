@@ -1,24 +1,9 @@
 server:
-  port: 8083
+  port: 8083          # review‑service работает на 8083
 
 spring:
-  application:
-    name: review-service
-  datasource:
-    url: jdbc:postgresql://postgres:5432/reviewdb
-    username: postgres
-    password: qwerty1234
-    driver-class-name: org.postgresql.Driver
-  jpa:
-    hibernate:
-      ddl-auto: update  # Автоматическое создание таблиц
-    show-sql: true  # Логирование SQL-запросов
-    properties:
-      hibernate:
-        format_sql: true
-
   kafka:
-    bootstrap-servers: kafka:9092
+    bootstrap-servers: localhost:9092
     consumer:
       group-id: review-service-group
       auto-offset-reset: earliest
@@ -28,18 +13,51 @@ spring:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
 
+  application:
+    name: review-service     # Имя сервиса в Eureka
+
+  datasource:
+    url: jdbc:postgresql://postgres:5432/reviewdb
+    username: postgres
+    password: qwerty1234
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: update        # Автоматическое создание/обновление схемы
+    show-sql: true            # Логирование SQL
+    properties:
+      hibernate:
+        format_sql: true
+
 eureka:
   client:
-    service-url:
-      defaultZone: http://eureka-server:8761/eureka/
     register-with-eureka: true
     fetch-registry: true
+    service-url:
+      defaultZone: http://eureka-server:8761/eureka
   instance:
     prefer-ip-address: true
 
+jwt:
+  secret: fK7s8WcVYpAb94J5zQJr32eTl6dWqHXzMQeqGzXywKCd6T7v3YKmSgP9x3D2VJsaVxXYLkq5PKWz7vUMbS9Xrw==
+  expiration: 86400000        # 24 ч
+
+# Нужно для TMDB‑клиента
 tmdb:
   api_key: e28fe83118014486bd75c60ecd32ede4
   base_url: https://api.themoviedb.org/3
 
+# Health‑чек, чтобы Gateway/Eureka видели статус UP
+management:
+  endpoints:
+    web:
+      exposure.include: health,info
+  endpoint:
+    health:
+      show-details: never
+
+# Если в коде ещё используется @Value("${gateway.serviceName}")
 gateway:
   serviceName: gateway-service
