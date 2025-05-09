@@ -63,10 +63,18 @@ public class ReviewService {
 
     public void deleteReview(Long id) {
         reviewRepository.findById(id).ifPresent(r -> {
-            reviewRepository.deleteById(id);
+            // Clean up back-reference to review
+            viewedMovieRepository.findByUserIdAndFilmId(r.getUserId(), r.getFilmId())
+                    .ifPresent(vm -> {
+                        vm.setReviewId(null);
+                        viewedMovieRepository.save(vm);
+                    });
+
+            reviewRepository.deleteById(id); // основной delete
             sendRatingUpdateToKafka(r.getFilmId());
         });
     }
+
 
     public List<Review> getReviewsByFilm(Long filmId) {
         return reviewRepository.findByFilmId(filmId);
